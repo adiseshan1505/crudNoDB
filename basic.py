@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field 
 from uuid import UUID
 
@@ -10,14 +10,34 @@ class Book(BaseModel):
     rating : float=Field(gt=-1.0, lt=10.0)
 
 Books=[]
-
-
 app=FastAPI()
+
 @app.get('/')
-async def hello():
+async def start():
     return Books
 
 @app.post('/')
 async def createBook(book:Book):
     Books.append(book)
     return book
+
+@app.put('/{bookID}')
+async def updateBook(bookID:UUID,book:Book):
+    ctr=0
+    for x in Books:
+        ctr+=1
+        if x.id==bookID:
+            Books[ctr-1]=book 
+            return Books[ctr-1]
+    raise HTTPException(status_code=404, detail=f"book id {bookID} does not exist")
+
+
+@app.delete('/{bookID}')
+async def deleteBook(bookID:UUID):
+    ctr=0
+    for x in Books:
+        ctr+=1
+        if x.id==bookID:
+            del Books[ctr-1]
+            return f"ID {bookID} has been deleted"
+    raise HTTPException(status_code=404, detail=f"{bookID} has been deleted")
